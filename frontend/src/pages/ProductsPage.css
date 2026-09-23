@@ -1,0 +1,140 @@
+.products-page {
+  padding: var(--space-xl) 0;
+  min-height: 70vh;
+}
+
+.products-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+  gap: var(--space-md);
+}
+
+.products-page-header h1 {
+  font-size: var(--text-2xl);
+}
+
+.products-page-header .text-muted {
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  margin-top: 4px;
+}
+
+.filter-toggle {
+  display: none;
+}
+
+.products-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--space-xl);
+}
+
+/* Sidebar */
+.filters-sidebar {
+  position: sticky;
+  top: calc(var(--navbar-height) + var(--space-md));
+  align-self: start;
+}
+
+.filters-header {
+  display: none;
+}
+
+.filter-group {
+  margin-bottom: var(--space-lg);
+}
+
+.filter-group h4 {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-sm);
+}
+
+.filter-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.filter-chip:hover {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+.filter-chip.active {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+}
+
+.products-main {
+  min-height: 400px;
+}
+
+.filter-close {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .filter-toggle {
+    display: flex;
+  }
+
+  .products-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filters-sidebar {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    background: var(--bg-white);
+    padding: var(--space-lg);
+    overflow-y: auto;
+    animation: slideUp 0.3s var(--ease);
+  }
+
+  .filters-sidebar.open {
+    display: block;
+  }
+
+  .filters-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-lg);
+  }
+
+  .filters-header h3 {
+    font-size: var(--text-xl);
+  }
+
+  .filter-close {
+    display: flex;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: var(--bg);
+    color: var(--text-secondary);
+    font-size: var(--text-lg);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+  }
+}

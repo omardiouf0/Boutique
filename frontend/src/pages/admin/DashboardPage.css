@@ -1,0 +1,80 @@
+.admin-page-title {
+  font-size: var(--text-2xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-xl);
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+
+.kpi-card {
+  padding: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.kpi-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xl);
+  flex-shrink: 0;
+}
+
+.kpi-icon.revenue { background: #ECFDF5; color: #059669; }
+.kpi-icon.orders { background: #EFF6FF; color: #2563EB; }
+.kpi-icon.products { background: #FFF5EB; color: #F68B1E; }
+.kpi-icon.alert { background: #FEF2F2; color: #EF4444; }
+
+.kpi-info h2 {
+  font-size: var(--text-xl);
+  font-weight: 800;
+  margin-bottom: 0;
+}
+
+.kpi-label {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.kpi-sub {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.dashboard-section {
+  margin-bottom: var(--space-xl);
+}
+
+.dashboard-section h2 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-md);
+}
+
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .kpi-card {
+    padding: var(--space-md);
+    flex-direction: column;
+    text-align: center;
+    gap: var(--space-sm);
+  }
+}
