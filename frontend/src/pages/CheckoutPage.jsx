@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FiArrowLeft, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCheck, FiDownload } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,11 +11,11 @@ export default function CheckoutPage() {
   const { items, totalPrice, clearCart, getItemPrice } = useCart();
   const { user } = useAuth();
   const toast = useToast();
-  const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [orderResult, setOrderResult] = useState(null);
+  const [settings, setSettings] = useState(null);
 
   const [form, setForm] = useState({
     nom_client: user?.nom || '',
@@ -24,6 +24,21 @@ export default function CheckoutPage() {
     methode: 'orange_money',
     tel_paiement: user?.telephone || '',
   });
+
+  useEffect(() => {
+    api.get('/api/settings')
+      .then((res) => {
+        setSettings(res.data);
+        if (res.data) {
+          if (!res.data.orange_money_active && res.data.wave_active) {
+            setForm((f) => ({ ...f, methode: 'wave' }));
+          } else if (!res.data.orange_money_active && !res.data.wave_active && res.data.paiement_sur_place_active) {
+            setForm((f) => ({ ...f, methode: 'sur_place' }));
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const formatPrice = (price) => new Intl.NumberFormat('fr-FR').format(price);
 
@@ -158,10 +173,38 @@ export default function CheckoutPage() {
                 <h2><FiCreditCard /> Mode de paiement</h2>
                 <div className="payment-methods">
                   {[
-                    { value: 'orange_money', label: 'Orange Money', icon: '🟠', desc: 'Payez depuis votre compte Orange Money' },
-                    { value: 'wave', label: 'Wave', icon: '🔵', desc: 'Payez depuis votre compte Wave' },
-                    { value: 'sur_place', label: 'Paiement sur place', icon: '💵', desc: 'Payez à la livraison en espèces' },
-                  ].map(method => (
+                    {
+                      value: 'orange_money',
+                      label: 'Orange Money',
+                      icon: settings?.orange_money_logo ? (
+                        <img src={settings.orange_money_logo} alt="Orange Money" />
+                      ) : (
+                        '🟠'
+                      ),
+                      desc: 'Payez depuis votre compte Orange Money',
+                      enabled: settings ? settings.orange_money_active : true,
+                    },
+                    {
+                      value: 'wave',
+                      label: 'Wave',
+                      icon: settings?.wave_logo ? (
+                        <img src={settings.wave_logo} alt="Wave" />
+                      ) : (
+                        '🔵'
+                      ),
+                      desc: 'Payez depuis votre compte Wave',
+                      enabled: settings ? settings.wave_active : true,
+                    },
+                    {
+                      value: 'sur_place',
+                      label: 'Paiement sur place',
+                      icon: '💵',
+                      desc: 'Payez à la livraison en espèces',
+                      enabled: settings ? settings.paiement_sur_place_active : true,
+                    },
+                  ]
+                    .filter(m => m.enabled)
+                    .map(method => (
                     <label key={method.value} className={`payment-option ${form.methode === method.value ? 'selected' : ''}`}>
                       <input
                         type="radio"

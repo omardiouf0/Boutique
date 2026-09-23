@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FiPackage, FiDownload, FiEye } from 'react-icons/fi';
+import { FiPackage, FiDownload } from 'react-icons/fi';
 import api, { API_URL } from '../api/axios';
 import './OrdersPage.css';
 

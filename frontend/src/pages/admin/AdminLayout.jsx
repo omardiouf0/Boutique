@@ -1,5 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { FiGrid, FiPackage, FiFolder, FiShoppingBag, FiBarChart2, FiArrowLeft } from 'react-icons/fi';
+import { FiGrid, FiPackage, FiFolder, FiShoppingBag, FiBarChart2, FiSettings, FiArrowLeft } from 'react-icons/fi';
 import './AdminLayout.css';
 
 export default function AdminLayout() {
@@ -27,6 +27,9 @@ export default function AdminLayout() {
           </NavLink>
           <NavLink to="/admin/inventory" className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
             <FiBarChart2 /> Inventaire
+          </NavLink>
+          <NavLink to="/admin/settings" className={({ isActive }) => `admin-nav-link ${isActive ? 'active' : ''}`}>
+            <FiSettings /> Paramètres
           </NavLink>
         </nav>
       </aside>

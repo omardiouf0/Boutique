@@ -8,12 +8,26 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    }
-    setLoading(false);
+    const verifyAuth = async () => {
+      const storedUser = localStorage.getItem('user');
+      const token = localStorage.getItem('token');
+      if (storedUser && token) {
+        try {
+          // Verify token validity with server
+          const res = await api.get('/api/auth/me');
+          setUser(res.data);
+          localStorage.setItem('user', JSON.stringify(res.data));
+        } catch {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    verifyAuth();
   }, []);
 
   const login = async (email, password) => {

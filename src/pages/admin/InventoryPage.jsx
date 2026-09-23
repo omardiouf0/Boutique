@@ -30,7 +30,7 @@ export default function InventoryPage() {
       toast.success('Stock mis à jour');
       setStockEdits(prev => { const n = { ...prev }; delete n[productId]; return n; });
       fetchProducts();
-    } catch (err) {
+    } catch {
       toast.error('Erreur');
     }
   };
@@ -49,7 +49,7 @@ export default function InventoryPage() {
       toast.success(`${entries.length} produit(s) mis à jour`);
       setStockEdits({});
       fetchProducts();
-    } catch (err) {
+    } catch {
       toast.error('Erreur');
     }
   };
@@ -99,7 +99,16 @@ export default function InventoryPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(product => {
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px' }}>Chargement de l'inventaire...</td>
+              </tr>
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px' }}>Aucun produit trouvé</td>
+              </tr>
+            ) : (
+              filtered.map(product => {
               const hasEdit = stockEdits[product.id] !== undefined;
               const currentStock = hasEdit ? stockEdits[product.id] : product.stock;
 
@@ -141,7 +150,7 @@ export default function InventoryPage() {
                   </td>
                 </tr>
               );
-            })}
+            }))}
           </tbody>
         </table>
       </div>

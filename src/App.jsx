@@ -21,6 +21,8 @@ import CategoriesAdmin from './pages/admin/CategoriesAdmin';
 import OrdersAdmin from './pages/admin/OrdersAdmin';
 import InventoryPage from './pages/admin/InventoryPage';
 import SettingsPage from './pages/admin/SettingsPage';
+import { applyGraphicCharter, getSavedGraphicCharter } from './utils/themeCharter';
+import api from './api/axios';
 
 import './App.css';
 
@@ -41,6 +43,27 @@ function App() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Initialisation et synchronisation de la charte graphique
+  useEffect(() => {
+    const localCharter = getSavedGraphicCharter();
+    if (localCharter) {
+      applyGraphicCharter(localCharter);
+    }
+
+    api.get('/api/settings').then(res => {
+      if (res.data) {
+        applyGraphicCharter({
+          charte_theme: res.data.charte_theme,
+          primary_color: res.data.primary_color,
+          primary_dark: res.data.primary_dark,
+          primary_light: res.data.primary_light,
+          primary_bg: res.data.primary_bg,
+          border_radius_theme: res.data.border_radius_theme,
+        });
+      }
+    }).catch(() => {});
+  }, []);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');

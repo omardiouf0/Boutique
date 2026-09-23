@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { FiArrowLeft, FiUser, FiPhone, FiMapPin, FiCreditCard, FiCheck, FiDownload } from 'react-icons/fi';
 import { useCart } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,7 +11,6 @@ export default function CheckoutPage() {
   const { items, totalPrice, clearCart, getItemPrice } = useCart();
   const { user } = useAuth();
   const toast = useToast();
-  const navigate = useNavigate();
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);

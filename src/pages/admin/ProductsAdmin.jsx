@@ -77,7 +77,7 @@ export default function ProductsAdmin() {
       await api.delete(`/api/products/${id}`);
       toast.success('Produit supprimé');
       fetchProducts();
-    } catch (err) {
+    } catch {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -91,7 +91,7 @@ export default function ProductsAdmin() {
       const res = await api.post('/api/products/upload-image', fd);
       setForm(prev => ({ ...prev, image_url: res.data.url }));
       toast.success('Image uploadée');
-    } catch (err) {
+    } catch {
       toast.error('Erreur upload image');
     }
   };
@@ -134,39 +134,49 @@ export default function ProductsAdmin() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(product => (
-              <tr key={product.id}>
-                <td>
-                  <img
-                    src={product.image_url?.startsWith('http') ? product.image_url : product.image_url ? `${API_URL}${product.image_url}` : 'https://via.placeholder.com/40'}
-                    alt=""
-                    style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
-                  />
-                </td>
-                <td><strong>{product.nom}</strong></td>
-                <td>{product.category?.nom || '—'}</td>
-                <td>
-                  <span className="price">{formatPrice(product.prix_promo || product.prix)} FCFA</span>
-                  {product.prix_promo && <span className="price-old" style={{ display: 'block' }}>{formatPrice(product.prix)}</span>}
-                </td>
-                <td>
-                  <span className={`badge ${product.stock <= 5 ? 'badge-danger' : product.stock <= 15 ? 'badge-warning' : 'badge-success'}`}>
-                    {product.stock}
-                  </span>
-                </td>
-                <td>
-                  <span className={`badge ${product.is_active ? 'badge-success' : 'badge-danger'}`}>
-                    {product.is_active ? 'Actif' : 'Inactif'}
-                  </span>
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(product)}><FiEdit2 /></button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(product.id)} style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
-                  </div>
-                </td>
+            {loading ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px' }}>Chargement des produits...</td>
               </tr>
-            ))}
+            ) : filtered.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '24px' }}>Aucun produit trouvé</td>
+              </tr>
+            ) : (
+              filtered.map(product => (
+                <tr key={product.id}>
+                  <td>
+                    <img
+                      src={product.image_url?.startsWith('http') ? product.image_url : product.image_url ? `${API_URL}${product.image_url}` : 'https://via.placeholder.com/40'}
+                      alt=""
+                      style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
+                    />
+                  </td>
+                  <td><strong>{product.nom}</strong></td>
+                  <td>{product.category?.nom || '—'}</td>
+                  <td>
+                    <span className="price">{formatPrice(product.prix_promo || product.prix)} FCFA</span>
+                    {product.prix_promo && <span className="price-old" style={{ display: 'block' }}>{formatPrice(product.prix)}</span>}
+                  </td>
+                  <td>
+                    <span className={`badge ${product.stock <= 5 ? 'badge-danger' : product.stock <= 15 ? 'badge-warning' : 'badge-success'}`}>
+                      {product.stock}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`badge ${product.is_active ? 'badge-success' : 'badge-danger'}`}>
+                      {product.is_active ? 'Actif' : 'Inactif'}
+                    </span>
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(product)}><FiEdit2 /></button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(product.id)} style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -77,28 +77,38 @@ export default function CategoriesAdmin() {
             </tr>
           </thead>
           <tbody>
-            {categories.map(cat => (
-              <tr key={cat.id}>
-                <td>
-                  <img
-                    src={cat.image_url || 'https://via.placeholder.com/40'}
-                    alt=""
-                    style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
-                  />
-                </td>
-                <td><strong>{cat.nom}</strong></td>
-                <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{cat.slug}</td>
-                <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {cat.description || '—'}
-                </td>
-                <td>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button className="btn btn-ghost btn-sm" onClick={() => openEdit(cat)}><FiEdit2 /></button>
-                    <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(cat.id)} style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
-                  </div>
-                </td>
+            {loading ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '24px' }}>Chargement des catégories...</td>
               </tr>
-            ))}
+            ) : categories.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '24px' }}>Aucune catégorie trouvée</td>
+              </tr>
+            ) : (
+              categories.map(cat => (
+                <tr key={cat.id}>
+                  <td>
+                    <img
+                      src={cat.image_url || 'https://via.placeholder.com/40'}
+                      alt=""
+                      style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }}
+                    />
+                  </td>
+                  <td><strong>{cat.nom}</strong></td>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{cat.slug}</td>
+                  <td style={{ maxWidth: 300, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {cat.description || '—'}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button className="btn btn-ghost btn-sm" onClick={() => openEdit(cat)}><FiEdit2 /></button>
+                      <button className="btn btn-ghost btn-sm" onClick={() => handleDelete(cat.id)} style={{ color: 'var(--danger)' }}><FiTrash2 /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

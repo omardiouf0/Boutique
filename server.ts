@@ -120,6 +120,12 @@ interface SiteSettings {
   banniere_annonce_texte: string;
   chatbot_actif: boolean;
   maintenance_mode: boolean;
+  charte_theme?: string;
+  primary_color?: string;
+  primary_dark?: string;
+  primary_light?: string;
+  primary_bg?: string;
+  border_radius_theme?: string;
 }
 
 let siteSettings: SiteSettings = {
@@ -143,6 +149,12 @@ let siteSettings: SiteSettings = {
   banniere_annonce_texte: '🎉 Livraison gratuite à Dakar dès 50 000 FCFA d\'achat avec le code BAZAR2026 !',
   chatbot_actif: true,
   maintenance_mode: false,
+  charte_theme: 'orange-jumia',
+  primary_color: '#F68B1E',
+  primary_dark: '#E07A10',
+  primary_light: '#FFAD5C',
+  primary_bg: '#FFF5EB',
+  border_radius_theme: 'standard',
 };
 
 // Initial seed
@@ -234,7 +246,7 @@ function authenticateToken(req: Request, res: Response, next: NextFunction) {
     }
     (req as any).user = user;
     next();
-  } catch (_err) {
+  } catch {
     return res.status(401).json({ detail: 'Token invalide ou expiré' });
   }
 }

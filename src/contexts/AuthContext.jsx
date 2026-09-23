@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
           const res = await api.get('/api/auth/me');
           setUser(res.data);
           localStorage.setItem('user', JSON.stringify(res.data));
-        } catch (_err) {
+        } catch {
           // Token expired or invalid
           localStorage.removeItem('token');
           localStorage.removeItem('user');
