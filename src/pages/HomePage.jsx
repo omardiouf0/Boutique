@@ -1,26 +1,43 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiArrowRight, FiTrendingUp, FiZap, FiTruck, FiShield, FiHeadphones } from 'react-icons/fi';
-import api from '../api/axios';
+import api, { API_URL } from '../api/axios';
 import ProductCard from '../components/ProductCard';
 import './HomePage.css';
 
 export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
       api.get('/api/products/?limit=8&sort=recent'),
-      api.get('/api/categories/')
-    ]).then(([prodRes, catRes]) => {
+      api.get('/api/categories/'),
+      api.get('/api/settings').catch(() => ({ data: null }))
+    ]).then(([prodRes, catRes, setRes]) => {
       setProducts(prodRes.data);
       setCategories(catRes.data);
+      if (setRes?.data) setSettings(setRes.data);
     }).finally(() => setLoading(false));
+
+    const handleSettingsUpdate = () => {
+      api.get('/api/settings').then(res => {
+        if (res.data) setSettings(res.data);
+      }).catch(() => {});
+    };
+    window.addEventListener('settings-changed', handleSettingsUpdate);
+    return () => window.removeEventListener('settings-changed', handleSettingsUpdate);
   }, []);
 
   const promoProducts = products.filter(p => p.prix_promo && p.prix_promo < p.prix);
+
+  const headerImageUrl = settings?.image_entete
+    ? (settings.image_entete.startsWith('http') || settings.image_entete.startsWith('data:')
+        ? settings.image_entete
+        : `${API_URL}${settings.image_entete}`)
+    : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600';
 
   return (
     <div className="home-page fade-in">
@@ -39,7 +56,13 @@ export default function HomePage() {
               </div>
             </div>
             <div className="hero-image">
-              <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600" alt="Shopping" />
+              <img
+                src={headerImageUrl}
+                alt={settings?.nom_site || "En-tête de la boutique"}
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=600';
+                }}
+              />
             </div>
           </div>
         </div>

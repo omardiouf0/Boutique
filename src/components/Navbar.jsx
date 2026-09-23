@@ -18,7 +18,49 @@ export default function Navbar({ theme, toggleTheme }) {
     api.get('/api/settings')
       .then(res => setSettings(res.data))
       .catch(() => {});
+
+    const handleSettingsUpdate = (e) => {
+      if (e?.detail) {
+        setSettings(e.detail);
+      } else {
+        api.get('/api/settings')
+          .then(res => setSettings(res.data))
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener('settings-changed', handleSettingsUpdate);
+    return () => window.removeEventListener('settings-changed', handleSettingsUpdate);
   }, []);
+
+  const formatLogoText = (name) => {
+    if (!name) return <>Bazar<span>Shop</span></>;
+    const clean = name.trim();
+
+    // If multiple words (e.g. "Ndiaye Shop", "Marché Express")
+    const lastSpace = clean.lastIndexOf(' ');
+    if (lastSpace !== -1) {
+      const firstPart = clean.substring(0, lastSpace);
+      const lastPart = clean.substring(lastSpace + 1);
+      return (
+        <>
+          {firstPart} <span>{lastPart}</span>
+        </>
+      );
+    }
+
+    // If compound word ending with Shop/Store/Market (e.g. "BazarShop", "NdiayeShop")
+    const match = clean.match(/^(.*?)(shop|store|bazar|market)$/i);
+    if (match && match[1].length > 0) {
+      return (
+        <>
+          {match[1]}<span>{match[2]}</span>
+        </>
+      );
+    }
+
+    return <>{clean}</>;
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -58,13 +100,7 @@ export default function Navbar({ theme, toggleTheme }) {
       <nav className="navbar">
         <div className="container navbar-inner">
           <Link to="/" className="navbar-logo">
-            🛒 {settings?.nom_site ? (
-              <>
-                {settings.nom_site.slice(0, 5)}<span>{settings.nom_site.slice(5) || 'Shop'}</span>
-              </>
-            ) : (
-              <>Bazar<span>Shop</span></>
-            )}
+            🛒 {formatLogoText(settings?.nom_site)}
           </Link>
 
         <form className="navbar-search" onSubmit={handleSearch}>

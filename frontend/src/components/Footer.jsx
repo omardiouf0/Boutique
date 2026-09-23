@@ -1,21 +1,67 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
+import api from '../api/axios';
 import './Footer.css';
 
 export default function Footer() {
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    api.get('/api/settings')
+      .then(res => setSettings(res.data))
+      .catch(() => {});
+
+    const handleSettingsUpdate = (e) => {
+      if (e?.detail) {
+        setSettings(e.detail);
+      } else {
+        api.get('/api/settings')
+          .then(res => setSettings(res.data))
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener('settings-changed', handleSettingsUpdate);
+    return () => window.removeEventListener('settings-changed', handleSettingsUpdate);
+  }, []);
+
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer-grid">
           <div className="footer-col">
-            <h3 className="footer-logo">🛒 BazarShop</h3>
+            <h3 className="footer-logo">🛒 {settings?.nom_site || 'BazarShop'}</h3>
             <p className="footer-desc">
-              Votre boutique en ligne de confiance. Les meilleurs produits aux meilleurs prix, livrés chez vous.
+              {settings?.slogan || 'Votre boutique en ligne de confiance. Les meilleurs produits aux meilleurs prix, livrés chez vous.'}
             </p>
             <div className="footer-payment">
-              <span className="payment-badge orange-money">🟠 Orange Money</span>
-              <span className="payment-badge wave">🔵 Wave</span>
-              <span className="payment-badge cash">💵 Sur Place</span>
+              {settings?.orange_money_active !== false && (
+                <span className="payment-badge orange-money">
+                  {settings?.orange_money_logo ? (
+                    <img src={settings.orange_money_logo} alt="Orange Money" />
+                  ) : (
+                    <span>🟠</span>
+                  )}
+                  <span>Orange Money</span>
+                </span>
+              )}
+              {settings?.wave_active !== false && (
+                <span className="payment-badge wave">
+                  {settings?.wave_logo ? (
+                    <img src={settings.wave_logo} alt="Wave" />
+                  ) : (
+                    <span>🔵</span>
+                  )}
+                  <span>Wave</span>
+                </span>
+              )}
+              {settings?.paiement_sur_place_active !== false && (
+                <span className="payment-badge cash">
+                  <span>💵</span>
+                  <span>Sur Place</span>
+                </span>
+              )}
             </div>
           </div>
 
@@ -38,19 +84,19 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Contact</h4>
             <div className="footer-contact-item">
-              <FiPhone /> +221 77 000 00 00
+              <FiPhone /> {settings?.telephone_contact || '+221 33 800 00 00'}
             </div>
             <div className="footer-contact-item">
-              <FiMail /> contact@bazarshop.com
+              <FiMail /> {settings?.email_contact || 'contact@bazarshop.com'}
             </div>
             <div className="footer-contact-item">
-              <FiMapPin /> Dakar, Sénégal
+              <FiMapPin /> {settings?.adresse_physique || 'Dakar, Sénégal'}
             </div>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <p>© {new Date().getFullYear()} BazarShop. Tous droits réservés.</p>
+          <p>© {new Date().getFullYear()} {settings?.nom_site || 'BazarShop'}. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

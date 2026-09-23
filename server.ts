@@ -1,4 +1,5 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express from 'express';
+import type { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import path from 'path';
@@ -8,7 +9,9 @@ import { createServer as createViteServer } from 'vite';
 import { GoogleGenAI } from '@google/genai';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const portArgIndex = process.argv.indexOf('--port');
+const portArg = portArgIndex !== -1 && process.argv[portArgIndex + 1] ? process.argv[portArgIndex + 1] : null;
+const PORT = process.env.PORT || portArg || 3000;
 const SECRET_KEY = process.env.JWT_SECRET || 'bazarshop-secret-key-change-in-production';
 
 app.use(cors());
@@ -126,12 +129,13 @@ interface SiteSettings {
   primary_light?: string;
   primary_bg?: string;
   border_radius_theme?: string;
+  image_entete?: string;
 }
 
-let siteSettings: SiteSettings = {
-  nom_site: 'BazarShop',
+const defaultSiteSettings: SiteSettings = {
+  nom_site: 'Ndiaye Shop',
   slogan: 'Votre marketplace de confiance au Sénégal',
-  email_contact: 'contact@bazarshop.com',
+  email_contact: 'contact@ndiayeshop.com',
   telephone_contact: '+221 33 800 00 00',
   adresse_physique: 'Plateau, Rue Carnot x Dial Diop, Dakar, Sénégal',
   devise: 'FCFA',
@@ -155,7 +159,24 @@ let siteSettings: SiteSettings = {
   primary_light: '#FFAD5C',
   primary_bg: '#FFF5EB',
   border_radius_theme: 'standard',
+  image_entete: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800',
 };
+
+const SETTINGS_FILE = path.resolve('data/settings.json');
+const dataDir = path.resolve('data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+let siteSettings: SiteSettings = { ...defaultSiteSettings };
+if (fs.existsSync(SETTINGS_FILE)) {
+  try {
+    const raw = fs.readFileSync(SETTINGS_FILE, 'utf-8');
+    siteSettings = { ...defaultSiteSettings, ...JSON.parse(raw) };
+  } catch {
+    // keep defaults
+  }
+}
 
 // Initial seed
 let nextUserId = 2;
@@ -787,6 +808,12 @@ app.put('/api/settings', requireAdmin, (req: Request, res: Response) => {
     livraison_gratuite_min: Number(updates.livraison_gratuite_min) || siteSettings.livraison_gratuite_min,
   };
 
+  try {
+    fs.writeFileSync(SETTINGS_FILE, JSON.stringify(siteSettings, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to write settings.json', err);
+  }
+
   return res.json({
     message: 'Paramètres du site mis à jour avec succès',
     settings: siteSettings,
@@ -1020,7 +1047,7 @@ async function startServer() {
     });
   } else {
     const vite = await createViteServer({
-      server: { middlewareMode: true, host: '0.0.0.0' },
+      server: { middlewareMode: true, host: '0.0.0.0', hmr: false, ws: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);

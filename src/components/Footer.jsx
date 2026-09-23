@@ -11,6 +11,19 @@ export default function Footer() {
     api.get('/api/settings')
       .then(res => setSettings(res.data))
       .catch(() => {});
+
+    const handleSettingsUpdate = (e) => {
+      if (e?.detail) {
+        setSettings(e.detail);
+      } else {
+        api.get('/api/settings')
+          .then(res => setSettings(res.data))
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener('settings-changed', handleSettingsUpdate);
+    return () => window.removeEventListener('settings-changed', handleSettingsUpdate);
   }, []);
 
   return (

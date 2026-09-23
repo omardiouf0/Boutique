@@ -20,7 +20,7 @@ import {
   FiEye,
   FiX
 } from 'react-icons/fi';
-import api from '../../api/axios';
+import api, { API_URL } from '../../api/axios';
 import { useToast } from '../../contexts/ToastContext';
 import {
   CHARTE_PRESETS,
@@ -30,6 +30,51 @@ import {
 } from '../../utils/themeCharter';
 import './SettingsPage.css';
 
+export const HEADER_IMAGE_PRESETS = [
+  {
+    id: 'shopping-bags',
+    name: 'Shopping & Mode Urbaine',
+    desc: 'Ambiance moderne, sacs shopping et lifestyle',
+    url: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800',
+    badge: 'Classique',
+  },
+  {
+    id: 'fashion-store',
+    name: 'Mode & Prêt-à-porter',
+    desc: 'Élégance, boutique de vêtements et tendances',
+    url: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800',
+    badge: 'Mode',
+  },
+  {
+    id: 'tech-gadgets',
+    name: 'High-Tech & Gadgets',
+    desc: 'Smartphones, casques et électronique moderne',
+    url: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?w=800',
+    badge: 'High-Tech',
+  },
+  {
+    id: 'cosmetics-beauty',
+    name: 'Cosmétique & Soins Beauté',
+    desc: 'Produits de beauté, parfums et soins personnels',
+    url: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800',
+    badge: 'Beauté',
+  },
+  {
+    id: 'grocery-supermarket',
+    name: 'Supermarché & Épicerie',
+    desc: 'Alimentation fraîche, fruits et courses quotidiennes',
+    url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=800',
+    badge: 'Épicerie',
+  },
+  {
+    id: 'african-market',
+    name: 'Marché Africain & Produits Locaux',
+    desc: 'Couleurs vives, artisanat et produits locaux',
+    url: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800',
+    badge: 'Local',
+  },
+];
+
 export default function SettingsPage() {
   const toast = useToast();
   const [loading, setLoading] = useState(true);
@@ -37,13 +82,16 @@ export default function SettingsPage() {
   const [uploadingWave, setUploadingWave] = useState(false);
   const [uploadingOm, setUploadingOm] = useState(false);
   const [showCharterModal, setShowCharterModal] = useState(false);
+  const [showHeaderImgModal, setShowHeaderImgModal] = useState(false);
+  const [uploadingHeaderImg, setUploadingHeaderImg] = useState(false);
   const [customColor, setCustomColor] = useState('#F68B1E');
 
   const waveFileRef = useRef(null);
   const omFileRef = useRef(null);
+  const headerImgFileRef = useRef(null);
 
   const [settings, setSettings] = useState({
-    nom_site: 'BazarShop',
+    nom_site: 'Ndiaye Shop',
     slogan: '',
     email_contact: '',
     telephone_contact: '',
@@ -69,6 +117,7 @@ export default function SettingsPage() {
     primary_light: '#FFAD5C',
     primary_bg: '#FFF5EB',
     border_radius_theme: 'standard',
+    image_entete: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800',
   });
 
   const fetchSettings = async () => {
@@ -142,6 +191,52 @@ export default function SettingsPage() {
     toast.success('Charte graphique Orange Bazar (défaut) restaurée !');
   };
 
+  const handleHeaderImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Veuillez sélectionner un fichier image valide (JPG, PNG, WebP, SVG)');
+      return;
+    }
+
+    setUploadingHeaderImg(true);
+    const fd = new FormData();
+    fd.append('file', file);
+
+    try {
+      const res = await api.post('/api/upload-image', fd);
+      if (res.data?.url) {
+        const updated = { ...settings, image_entete: res.data.url };
+        setSettings(updated);
+        toast.success("Image d'en-tête téléversée avec succès ! N'oubliez pas d'enregistrer.");
+        window.dispatchEvent(new CustomEvent('settings-changed', { detail: updated }));
+      }
+    } catch {
+      toast.error("Erreur lors du téléversement de l'image d'en-tête");
+    } finally {
+      setUploadingHeaderImg(false);
+      if (headerImgFileRef.current) {
+        headerImgFileRef.current.value = '';
+      }
+    }
+  };
+
+  const handleSelectHeaderPreset = (preset) => {
+    const updated = { ...settings, image_entete: preset.url };
+    setSettings(updated);
+    toast.success(`Image d'en-tête « ${preset.name} » appliquée !`);
+    window.dispatchEvent(new CustomEvent('settings-changed', { detail: updated }));
+  };
+
+  const handleResetHeaderImage = () => {
+    const defaultUrl = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800';
+    const updated = { ...settings, image_entete: defaultUrl };
+    setSettings(updated);
+    toast.info("Image d'en-tête par défaut restaurée !");
+    window.dispatchEvent(new CustomEvent('settings-changed', { detail: updated }));
+  };
+
   const handleFileUpload = async (e, type) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -189,6 +284,7 @@ export default function SettingsPage() {
       const res = await api.put('/api/settings', settings);
       setSettings(res.data.settings);
       applyGraphicCharter(res.data.settings);
+      window.dispatchEvent(new CustomEvent('settings-changed', { detail: res.data.settings }));
       toast.success('Paramètres et charte graphique enregistrés avec succès !');
     } catch (err) {
       toast.error(err.response?.data?.detail || "Erreur lors de l'enregistrement des paramètres");
@@ -222,6 +318,14 @@ export default function SettingsPage() {
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <button
             type="button"
+            className="btn btn-header-img-trigger"
+            onClick={() => setShowHeaderImgModal(true)}
+            title="Modifier l'image de la bannière hero en en-tête du site"
+          >
+            <FiImage /> Changer l'image d'en-tête
+          </button>
+          <button
+            type="button"
             className="btn btn-charte-trigger"
             onClick={() => setShowCharterModal(true)}
             title="Modifier les couleurs et l'ambiance visuelle du site"
@@ -250,6 +354,156 @@ export default function SettingsPage() {
 
       <form onSubmit={handleSave}>
         <div className="settings-grid">
+          {/* SECTION DÉDIÉE: IMAGE D'EN-TÊTE DU SITE (BANNIÈRE HERO D'ACCUEIL) */}
+          <div className="settings-section-card card header-img-section-full" id="image-entete-section">
+            <div className="settings-section-header">
+              <div className="settings-section-icon" style={{ background: 'rgba(37, 99, 235, 0.1)', color: '#2563EB' }}>
+                <FiImage />
+              </div>
+              <div>
+                <h3>Image d'En-Tête du Site (Bannière Hero d'Accueil)</h3>
+                <p>Personnalisez l'image principale mise en avant sur la page d'accueil de votre boutique</p>
+              </div>
+              <div className="charte-header-actions">
+                <input
+                  type="file"
+                  ref={headerImgFileRef}
+                  onChange={handleHeaderImageUpload}
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-header-img-trigger btn-sm"
+                  onClick={() => headerImgFileRef.current?.click()}
+                  disabled={uploadingHeaderImg}
+                  title="Téléverser directement depuis votre appareil"
+                >
+                  <FiUpload /> {uploadingHeaderImg ? 'Téléversement...' : "Changer l'image d'en-tête"}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowHeaderImgModal(true)}
+                  title="Ouvrir la galerie des bannières"
+                >
+                  <FiEye /> Galerie & Suggestions
+                </button>
+              </div>
+            </div>
+
+            <div className="header-img-main-container">
+              {/* Colonne Aperçu visuel */}
+              <div className="header-img-preview-box">
+                <div style={{ width: '100%', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
+                    <FiEye /> Aperçu actuel
+                  </span>
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Format 4:3 / 16:9 recommandé</span>
+                </div>
+
+                <div className="header-img-preview-img-wrap">
+                  <img
+                    src={
+                      settings.image_entete
+                        ? (settings.image_entete.startsWith('http') || settings.image_entete.startsWith('data:')
+                            ? settings.image_entete
+                            : `${API_URL}${settings.image_entete}`)
+                        : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800'
+                    }
+                    alt="Image d'en-tête"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800';
+                    }}
+                  />
+                  <div className="header-img-preview-badge">
+                    Bannière active en accueil
+                  </div>
+                </div>
+
+                <div className="header-img-actions-row">
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    style={{ flex: 1 }}
+                    onClick={() => headerImgFileRef.current?.click()}
+                    disabled={uploadingHeaderImg}
+                  >
+                    <FiUpload /> {uploadingHeaderImg ? 'Envoi...' : "Changer l'image"}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={handleResetHeaderImage}
+                    title="Restaurer l'image originale par défaut"
+                  >
+                    <FiRotateCcw /> Réinitialiser
+                  </button>
+                </div>
+              </div>
+
+              {/* Colonne Options & Suggestions thématiques */}
+              <div>
+                <div className="form-group" style={{ marginBottom: 12 }}>
+                  <label style={{ fontSize: 13, fontWeight: 700 }}>
+                    Lien direct vers l'image (URL web) ou fichier téléversé :
+                  </label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="https://images.unsplash.com/... ou téléversez un fichier"
+                      value={settings.image_entete || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        handleChange('image_entete', val);
+                        window.dispatchEvent(new CustomEvent('settings-changed', { detail: { ...settings, image_entete: val } }));
+                      }}
+                    />
+                    {settings.image_entete && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        onClick={() => handleChange('image_entete', '')}
+                        title="Effacer le champ"
+                      >
+                        <FiTrash2 />
+                      </button>
+                    )}
+                  </div>
+                  <span style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 4, display: 'block' }}>
+                    Formats acceptés : PNG, JPG, JPEG, WebP ou SVG. Vous pouvez importer un fichier de votre appareil ou coller une URL d'image.
+                  </span>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', display: 'block', marginBottom: 8 }}>
+                    📸 Ou sélectionnez une bannière thématique recommandée :
+                  </label>
+                  <div className="header-img-presets-grid">
+                    {HEADER_IMAGE_PRESETS.map((preset) => {
+                      const isSelected = settings.image_entete === preset.url;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          className={`header-img-preset-card ${isSelected ? 'active' : ''}`}
+                          onClick={() => handleSelectHeaderPreset(preset)}
+                        >
+                          <img src={preset.url} alt={preset.name} className="header-img-preset-thumb" />
+                          <div className="header-img-preset-info">
+                            <strong>{preset.name}</strong>
+                            <span>{preset.badge} • {preset.desc}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* SECTION DÉDIÉE: CHARTE GRAPHIQUE & IDENTITÉ VISUELLE */}
           <div className="settings-section-card card charte-section-full" id="charte-graphique">
             <div className="settings-section-header">
@@ -954,6 +1208,133 @@ export default function SettingsPage() {
                   <FiCheckCircle /> Enregistrer & Valider
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* MODAL CHANGEMENT DE L'IMAGE D'EN-TÊTE */}
+      {showHeaderImgModal && (
+        <div className="charte-modal-overlay" onClick={() => setShowHeaderImgModal(false)}>
+          <div className="charte-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="charte-modal-header">
+              <h2><FiImage style={{ color: '#2563EB' }} /> Changer l'Image d'En-Tête du Site (Bannière Hero)</h2>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => setShowHeaderImgModal(false)}
+                title="Fermer"
+              >
+                <FiX size={20} />
+              </button>
+            </div>
+
+            <div className="charte-modal-body">
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 20, fontSize: 13.5 }}>
+                Cette image est mise en valeur en haut de la page d'accueil de la boutique, à côté du message d'accroche et du bouton d'action principal.
+              </p>
+
+              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 18, flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => headerImgFileRef.current?.click()}
+                  disabled={uploadingHeaderImg}
+                >
+                  <FiUpload /> {uploadingHeaderImg ? 'Téléversement en cours...' : 'Téléverser depuis votre appareil (JPG, PNG, WebP)'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={handleResetHeaderImage}
+                >
+                  <FiRotateCcw /> Restaurer l'image originale
+                </button>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 18 }}>
+                <label style={{ fontSize: 13, fontWeight: 700 }}>Ou saisissez l'adresse URL d'une image en ligne :</label>
+                <input
+                  type="text"
+                  className="input"
+                  placeholder="https://..."
+                  value={settings.image_entete || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    handleChange('image_entete', val);
+                    window.dispatchEvent(new CustomEvent('settings-changed', { detail: { ...settings, image_entete: val } }));
+                  }}
+                />
+              </div>
+
+              <label style={{ fontSize: 13, fontWeight: 700, display: 'block', marginBottom: 10 }}>
+                Sélectionner une bannière thématique recommandée :
+              </label>
+              <div className="header-img-presets-grid">
+                {HEADER_IMAGE_PRESETS.map((preset) => {
+                  const isSelected = settings.image_entete === preset.url;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      className={`header-img-preset-card ${isSelected ? 'active' : ''}`}
+                      onClick={() => handleSelectHeaderPreset(preset)}
+                    >
+                      <img src={preset.url} alt={preset.name} className="header-img-preset-thumb" />
+                      <div className="header-img-preset-info">
+                        <strong>{preset.name}</strong>
+                        <span>{preset.badge}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Aperçu en direct */}
+              <div className="charte-live-preview" style={{ marginTop: 20 }}>
+                <div className="charte-preview-header">
+                  <FiEye /> Rendu en direct de la bannière d'en-tête
+                </div>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <img
+                    src={
+                      settings.image_entete
+                        ? (settings.image_entete.startsWith('http') || settings.image_entete.startsWith('data:')
+                            ? settings.image_entete
+                            : `${API_URL}${settings.image_entete}`)
+                        : 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800'
+                    }
+                    alt="Aperçu d'en-tête"
+                    style={{ width: 140, height: 95, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border-color)' }}
+                  />
+                  <div>
+                    <h4 style={{ margin: '0 0 4px', fontSize: 15 }}>Les Meilleurs Prix Livrés Chez Vous</h4>
+                    <p style={{ margin: 0, fontSize: 12, color: 'var(--text-muted)' }}>
+                      Aperçu de la section d'en-tête d'accueil avec l'image sélectionnée
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="charte-modal-footer">
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowHeaderImgModal(false)}
+              >
+                Fermer
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={(e) => {
+                  handleSave(e);
+                  setShowHeaderImgModal(false);
+                }}
+                disabled={saving}
+              >
+                <FiCheckCircle /> Enregistrer & Valider
+              </button>
             </div>
           </div>
         </div>

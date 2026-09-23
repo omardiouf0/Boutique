@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiSearch, FiShoppingCart, FiUser, FiMenu, FiX, FiSun, FiMoon, FiPackage, FiLogOut, FiGrid } from 'react-icons/fi';
+import { FiSearch, FiShoppingCart, FiUser, FiMenu, FiX, FiSun, FiMoon, FiPackage, FiLogOut, FiGrid, FiBell } from 'react-icons/fi';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
+import api from '../api/axios';
 import './Navbar.css';
 
 export default function Navbar({ theme, toggleTheme }) {
@@ -10,7 +11,56 @@ export default function Navbar({ theme, toggleTheme }) {
   const { totalItems, setIsOpen } = useCart();
   const [search, setSearch] = useState('');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [settings, setSettings] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    api.get('/api/settings')
+      .then(res => setSettings(res.data))
+      .catch(() => {});
+
+    const handleSettingsUpdate = (e) => {
+      if (e?.detail) {
+        setSettings(e.detail);
+      } else {
+        api.get('/api/settings')
+          .then(res => setSettings(res.data))
+          .catch(() => {});
+      }
+    };
+
+    window.addEventListener('settings-changed', handleSettingsUpdate);
+    return () => window.removeEventListener('settings-changed', handleSettingsUpdate);
+  }, []);
+
+  const formatLogoText = (name) => {
+    if (!name) return <>Bazar<span>Shop</span></>;
+    const clean = name.trim();
+
+    // If multiple words (e.g. "Ndiaye Shop", "Marché Express")
+    const lastSpace = clean.lastIndexOf(' ');
+    if (lastSpace !== -1) {
+      const firstPart = clean.substring(0, lastSpace);
+      const lastPart = clean.substring(lastSpace + 1);
+      return (
+        <>
+          {firstPart} <span>{lastPart}</span>
+        </>
+      );
+    }
+
+    // If compound word ending with Shop/Store/Market (e.g. "BazarShop", "NdiayeShop")
+    const match = clean.match(/^(.*?)(shop|store|bazar|market)$/i);
+    if (match && match[1].length > 0) {
+      return (
+        <>
+          {match[1]}<span>{match[2]}</span>
+        </>
+      );
+    }
+
+    return <>{clean}</>;
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -28,11 +78,30 @@ export default function Navbar({ theme, toggleTheme }) {
   };
 
   return (
-    <nav className="navbar">
-      <div className="container navbar-inner">
-        <Link to="/" className="navbar-logo">
-          🛒 Bazar<span>Shop</span>
-        </Link>
+    <>
+      {settings?.banniere_annonce_active && settings?.banniere_annonce_texte && (
+        <div style={{
+          background: 'linear-gradient(90deg, #F68B1E, #e0770e)',
+          color: 'white',
+          padding: '7px 16px',
+          textAlign: 'center',
+          fontSize: '12.5px',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          letterSpacing: '0.2px'
+        }}>
+          <FiBell style={{ fontSize: '14px' }} />
+          <span>{settings.banniere_annonce_texte}</span>
+        </div>
+      )}
+      <nav className="navbar">
+        <div className="container navbar-inner">
+          <Link to="/" className="navbar-logo">
+            🛒 {formatLogoText(settings?.nom_site)}
+          </Link>
 
         <form className="navbar-search" onSubmit={handleSearch}>
           <FiSearch className="navbar-search-icon" />
@@ -116,5 +185,6 @@ export default function Navbar({ theme, toggleTheme }) {
         </button>
       </div>
     </nav>
+  </>
   );
 }
