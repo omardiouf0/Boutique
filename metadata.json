@@ -1,0 +1,6 @@
+{
+  "name": "BazarShop",
+  "description": "Boutique en ligne complète inspirée de Jumia avec catalogue de produits, panier dynamique, paiement mobile Wave/Orange Money et espace d'administration",
+  "permissions": [],
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

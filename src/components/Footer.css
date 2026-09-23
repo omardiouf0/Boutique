@@ -1,0 +1,118 @@
+.footer {
+  background: var(--bg-white);
+  border-top: 1px solid var(--border-light);
+  padding: var(--space-2xl) 0 0;
+  margin-top: var(--space-2xl);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+  gap: var(--space-xl);
+}
+
+.footer-logo {
+  font-family: var(--font-heading);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: var(--space-sm);
+}
+
+.footer-desc {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+  margin-bottom: var(--space-md);
+}
+
+.footer-payment {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.payment-badge {
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.payment-badge img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.payment-badge.orange-money {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.payment-badge.wave {
+  background: #E3F2FD;
+  color: #1565C0;
+}
+
+.payment-badge.cash {
+  background: var(--success-bg);
+  color: #059669;
+}
+
+.footer-col h4 {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+  margin-bottom: var(--space-md);
+}
+
+.footer-col a {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  padding: 4px 0;
+  transition: color var(--transition-fast);
+}
+
+.footer-col a:hover {
+  color: var(--primary);
+  padding-left: 4px;
+}
+
+.footer-contact-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  padding: 4px 0;
+}
+
+.footer-bottom {
+  border-top: 1px solid var(--border-light);
+  margin-top: var(--space-xl);
+  padding: var(--space-md) 0;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-grid {
+    grid-template-columns: 1fr;
+  }
+}

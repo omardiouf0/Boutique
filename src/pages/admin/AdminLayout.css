@@ -1,0 +1,126 @@
+.admin-layout {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+}
+
+.admin-sidebar {
+  background: var(--bg-white);
+  border-right: 1px solid var(--border-light);
+  padding: var(--space-lg);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.admin-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+}
+
+.admin-sidebar-header h2 {
+  font-size: var(--text-lg);
+  font-weight: 800;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.admin-nav-link:hover {
+  background: var(--primary-bg);
+  color: var(--primary);
+}
+
+.admin-nav-link.active {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(246, 139, 30, 0.3);
+}
+
+.admin-content {
+  padding: var(--space-xl);
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.admin-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-xl);
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.admin-page-header h1 {
+  font-size: var(--text-2xl);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto;
+    height: auto;
+    z-index: 90;
+    padding: var(--space-sm);
+    border-right: none;
+    border-top: 1px solid var(--border-light);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+  }
+
+  .admin-sidebar-header {
+    display: none;
+  }
+
+  .admin-nav {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 0;
+  }
+
+  .admin-nav-link {
+    flex-direction: column;
+    font-size: 10px;
+    gap: 4px;
+    padding: 8px;
+  }
+
+  .admin-nav-link svg {
+    font-size: 18px;
+  }
+
+  .admin-content {
+    padding: var(--space-md);
+    padding-bottom: 80px;
+  }
+}

@@ -1,66 +1,54 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import Optional
 import uuid
-
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 from database import get_db
-from models import Payment, Order, PaymentMethod, PaymentStatus, OrderStatus, User
+from models import Order, OrderStatus, Payment, PaymentMethod, PaymentStatus, User
 from schemas import PaymentCreate, PaymentOut
 from auth import get_current_user
 
-router = APIRouter(prefix="/api/payments", tags=["Payments"])
+router = APIRouter(prefix="/api/payments", tags=["Paiements"])
 
 
-@router.post("/", response_model=PaymentOut)
-def create_payment(
-    data: PaymentCreate,
+@router.post("", response_model=PaymentOut, status_code=status.HTTP_201_CREATED)
+def process_payment(
+    payment_data: PaymentCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    order = db.query(Order).filter(Order.id == data.order_id).first()
+    order = db.query(Order).filter(Order.id == payment_data.order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="Commande non trouvée")
 
-    if user.role != "admin" and order.user_id != user.id:
+    if current_user.role != "admin" and order.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Accès non autorisé")
 
-    existing_payment = db.query(Payment).filter(Payment.order_id == data.order_id).first()
+    existing_payment = db.query(Payment).filter(Payment.order_id == payment_data.order_id).first()
     if existing_payment:
-        raise HTTPException(status_code=400, detail="Un paiement existe déjà pour cette commande")
+        raise HTTPException(status_code=400, detail="Cette commande a déjà un paiement associé")
 
-    valid_methods = [m.value for m in PaymentMethod]
-    if data.methode not in valid_methods:
-        raise HTTPException(status_code=400, detail=f"Méthode invalide. Valeurs: {valid_methods}")
+    reference = f"PAY-{uuid.uuid4().hex[:8].upper()}"
 
-    reference = f"BZS-{uuid.uuid4().hex[:8].upper()}"
-
-    # Simulate payment processing
-    if data.methode == PaymentMethod.orange_money.value:
-        if not data.telephone:
-            raise HTTPException(status_code=400, detail="Numéro de téléphone requis pour Orange Money")
-        payment_status = PaymentStatus.completee.value
-    elif data.methode == PaymentMethod.wave.value:
-        if not data.telephone:
-            raise HTTPException(status_code=400, detail="Numéro de téléphone requis pour Wave")
-        payment_status = PaymentStatus.completee.value
-    else:  # sur_place
-        payment_status = PaymentStatus.en_attente.value
+    if payment_data.methode in [PaymentMethod.ORANGE_MONEY, PaymentMethod.WAVE]:
+        if not payment_data.telephone:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Numéro de téléphone requis pour le paiement par {payment_data.methode.value}",
+            )
+        payment_status = PaymentStatus.COMPLETEE
+        order.statut = OrderStatus.CONFIRMEE
+    else:
+        payment_status = PaymentStatus.EN_ATTENTE
 
     payment = Payment(
-        order_id=data.order_id,
-        methode=data.methode,
+        order_id=order.id,
+        methode=payment_data.methode,
         statut=payment_status,
         reference=reference,
         montant=order.total,
-        telephone=data.telephone
+        telephone=payment_data.telephone,
     )
 
     db.add(payment)
-
-    # Update order status based on payment
-    if payment_status == PaymentStatus.completee.value:
-        order.statut = OrderStatus.confirmee.value
-    
     db.commit()
     db.refresh(payment)
     return payment
@@ -70,9 +58,14 @@ def create_payment(
 def get_payment(
     order_id: int,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     payment = db.query(Payment).filter(Payment.order_id == order_id).first()
     if not payment:
         raise HTTPException(status_code=404, detail="Paiement non trouvé")
+
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if current_user.role != "admin" and order.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Accès non autorisé")
+
     return payment

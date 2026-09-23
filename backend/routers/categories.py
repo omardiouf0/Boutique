@@ -1,25 +1,24 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List
 import re
-
+from typing import List
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from auth import get_current_admin
 from database import get_db
 from models import Category, User
-from schemas import CategoryCreate, CategoryUpdate, CategoryOut
-from auth import get_current_admin
+from schemas import CategoryCreate, CategoryOut
 
-router = APIRouter(prefix="/api/categories", tags=["Categories"])
+router = APIRouter(prefix="/api/categories", tags=["Catégories"])
 
 
-def generate_slug(name: str) -> str:
-    slug = name.lower().strip()
-    slug = re.sub(r'[^a-z0-9\s-]', '', slug)
-    slug = re.sub(r'[\s]+', '-', slug)
+def create_slug(text: str) -> str:
+    slug = text.lower().strip()
+    slug = re.sub(r"[^\w\s-]", "", slug)
+    slug = re.sub(r"[\s_-]+", "-", slug)
     return slug
 
 
-@router.get("/", response_model=List[CategoryOut])
-def get_categories(db: Session = Depends(get_db)):
+@router.get("", response_model=List[CategoryOut])
+def list_categories(db: Session = Depends(get_db)):
     return db.query(Category).order_by(Category.nom).all()
 
 
@@ -31,21 +30,22 @@ def get_category(category_id: int, db: Session = Depends(get_db)):
     return cat
 
 
-@router.post("/", response_model=CategoryOut)
+@router.post("", response_model=CategoryOut, status_code=status.HTTP_201_CREATED)
 def create_category(
-    data: CategoryCreate,
+    category_data: CategoryCreate,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin)
+    _: User = Depends(get_current_admin),
 ):
-    existing = db.query(Category).filter(Category.nom == data.nom).first()
+    slug = create_slug(category_data.nom)
+    existing = db.query(Category).filter((Category.nom == category_data.nom) | (Category.slug == slug)).first()
     if existing:
         raise HTTPException(status_code=400, detail="Cette catégorie existe déjà")
 
     cat = Category(
-        nom=data.nom,
-        description=data.description,
-        image_url=data.image_url,
-        slug=generate_slug(data.nom)
+        nom=category_data.nom,
+        description=category_data.description,
+        image_url=category_data.image_url,
+        slug=slug,
     )
     db.add(cat)
     db.commit()
@@ -56,37 +56,31 @@ def create_category(
 @router.put("/{category_id}", response_model=CategoryOut)
 def update_category(
     category_id: int,
-    data: CategoryUpdate,
+    category_data: CategoryCreate,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin)
+    _: User = Depends(get_current_admin),
 ):
     cat = db.query(Category).filter(Category.id == category_id).first()
     if not cat:
         raise HTTPException(status_code=404, detail="Catégorie non trouvée")
 
-    if data.nom is not None:
-        cat.nom = data.nom
-        cat.slug = generate_slug(data.nom)
-    if data.description is not None:
-        cat.description = data.description
-    if data.image_url is not None:
-        cat.image_url = data.image_url
-
+    cat.nom = category_data.nom
+    cat.description = category_data.description
+    cat.image_url = category_data.image_url
+    cat.slug = create_slug(category_data.nom)
     db.commit()
     db.refresh(cat)
     return cat
 
 
-@router.delete("/{category_id}")
+@router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_category(
     category_id: int,
     db: Session = Depends(get_db),
-    admin: User = Depends(get_current_admin)
+    _: User = Depends(get_current_admin),
 ):
     cat = db.query(Category).filter(Category.id == category_id).first()
     if not cat:
         raise HTTPException(status_code=404, detail="Catégorie non trouvée")
-
     db.delete(cat)
     db.commit()
-    return {"message": "Catégorie supprimée"}

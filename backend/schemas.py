@@ -1,14 +1,18 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
 from datetime import datetime
+from typing import List, Optional
+from pydantic import BaseModel, EmailStr
+from models import OrderStatus, PaymentMethod, PaymentStatus, UserRole
 
 
-# ─── Auth ───────────────────────────────────────────────────────────
-class UserCreate(BaseModel):
+# User schemas
+class UserBase(BaseModel):
     nom: str
     email: EmailStr
-    password: str
     telephone: Optional[str] = None
+
+
+class UserCreate(UserBase):
+    password: str
 
 
 class UserLogin(BaseModel):
@@ -16,12 +20,9 @@ class UserLogin(BaseModel):
     password: str
 
 
-class UserOut(BaseModel):
+class UserOut(UserBase):
     id: int
-    nom: str
-    email: str
-    telephone: Optional[str] = None
-    role: str
+    role: UserRole
     created_at: datetime
 
     class Config:
@@ -34,24 +35,19 @@ class Token(BaseModel):
     user: UserOut
 
 
-# ─── Categories ─────────────────────────────────────────────────────
-class CategoryCreate(BaseModel):
+# Category schemas
+class CategoryBase(BaseModel):
     nom: str
     description: Optional[str] = None
     image_url: Optional[str] = None
 
 
-class CategoryUpdate(BaseModel):
-    nom: Optional[str] = None
-    description: Optional[str] = None
-    image_url: Optional[str] = None
+class CategoryCreate(CategoryBase):
+    pass
 
 
-class CategoryOut(BaseModel):
+class CategoryOut(CategoryBase):
     id: int
-    nom: str
-    description: Optional[str] = None
-    image_url: Optional[str] = None
     slug: str
     created_at: datetime
 
@@ -59,8 +55,8 @@ class CategoryOut(BaseModel):
         from_attributes = True
 
 
-# ─── Products ───────────────────────────────────────────────────────
-class ProductCreate(BaseModel):
+# Product schemas
+class ProductBase(BaseModel):
     nom: str
     description: Optional[str] = None
     prix: float
@@ -71,49 +67,27 @@ class ProductCreate(BaseModel):
     is_active: bool = True
 
 
-class ProductUpdate(BaseModel):
-    nom: Optional[str] = None
-    description: Optional[str] = None
-    prix: Optional[float] = None
-    prix_promo: Optional[float] = None
-    stock: Optional[int] = None
-    image_url: Optional[str] = None
-    category_id: Optional[int] = None
-    is_active: Optional[bool] = None
+class ProductCreate(ProductBase):
+    pass
 
 
-class ProductOut(BaseModel):
+class ProductOut(ProductBase):
     id: int
-    nom: str
-    description: Optional[str] = None
-    prix: float
-    prix_promo: Optional[float] = None
-    stock: int
-    image_url: Optional[str] = None
-    category_id: int
-    category: Optional[CategoryOut] = None
-    is_active: bool
     created_at: datetime
+    category: Optional[CategoryOut] = None
 
     class Config:
         from_attributes = True
 
 
-class StockUpdate(BaseModel):
+class ProductStockUpdate(BaseModel):
     stock: int
 
 
-# ─── Orders ─────────────────────────────────────────────────────────
+# Order schemas
 class OrderItemCreate(BaseModel):
     product_id: int
     quantite: int
-
-
-class OrderCreate(BaseModel):
-    items: List[OrderItemCreate]
-    nom_client: Optional[str] = None
-    telephone: Optional[str] = None
-    adresse: Optional[str] = None
 
 
 class OrderItemOut(BaseModel):
@@ -127,11 +101,18 @@ class OrderItemOut(BaseModel):
         from_attributes = True
 
 
+class OrderCreate(BaseModel):
+    items: List[OrderItemCreate]
+    nom_client: Optional[str] = None
+    telephone: Optional[str] = None
+    adresse: Optional[str] = None
+
+
 class PaymentOut(BaseModel):
     id: int
     order_id: int
-    methode: str
-    statut: str
+    methode: PaymentMethod
+    statut: PaymentStatus
     reference: Optional[str] = None
     montant: float
     telephone: Optional[str] = None
@@ -145,7 +126,7 @@ class OrderOut(BaseModel):
     id: int
     user_id: int
     total: float
-    statut: str
+    statut: OrderStatus
     nom_client: Optional[str] = None
     telephone: Optional[str] = None
     adresse: Optional[str] = None
@@ -158,21 +139,21 @@ class OrderOut(BaseModel):
 
 
 class OrderStatusUpdate(BaseModel):
-    statut: str
+    statut: OrderStatus
 
 
-# ─── Payments ───────────────────────────────────────────────────────
+# Payment schemas
 class PaymentCreate(BaseModel):
     order_id: int
-    methode: str  # orange_money, wave, sur_place
+    methode: PaymentMethod
     telephone: Optional[str] = None
 
 
-# ─── Dashboard ──────────────────────────────────────────────────────
+# Dashboard schemas
 class DashboardStats(BaseModel):
     total_revenue: float
     total_orders: int
     total_products: int
     low_stock_products: int
     orders_today: int
-    recent_orders: List[OrderOut] = []
+    recent_orders: List[OrderOut]

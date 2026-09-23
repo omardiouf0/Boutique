@@ -1,36 +1,43 @@
+import enum
+from datetime import datetime
 from sqlalchemy import (
-    Column, Integer, String, Float, Text, Boolean, DateTime, ForeignKey, Enum
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
 )
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
-
 from database import Base
 
 
 class UserRole(str, enum.Enum):
-    admin = "admin"
-    client = "client"
+    CLIENT = "client"
+    ADMIN = "admin"
 
 
 class OrderStatus(str, enum.Enum):
-    en_attente = "en_attente"
-    confirmee = "confirmee"
-    en_livraison = "en_livraison"
-    livree = "livree"
-    annulee = "annulee"
+    EN_ATTENTE = "en_attente"
+    CONFIRMEE = "confirmee"
+    EN_LIVRAISON = "en_livraison"
+    LIVREE = "livree"
+    ANNULEE = "annulee"
 
 
 class PaymentMethod(str, enum.Enum):
-    orange_money = "orange_money"
-    wave = "wave"
-    sur_place = "sur_place"
+    ORANGE_MONEY = "orange_money"
+    WAVE = "wave"
+    SUR_PLACE = "sur_place"
 
 
 class PaymentStatus(str, enum.Enum):
-    en_attente = "en_attente"
-    completee = "completee"
-    echouee = "echouee"
+    EN_ATTENTE = "en_attente"
+    COMPLETEE = "completee"
+    ECHOUÉE = "echouee"
 
 
 class User(Base):
@@ -38,10 +45,10 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     nom = Column(String(100), nullable=False)
-    email = Column(String(255), unique=True, index=True, nullable=False)
+    email = Column(String(150), unique=True, index=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     telephone = Column(String(20), nullable=True)
-    role = Column(String(10), default=UserRole.client.value)
+    role = Column(Enum(UserRole), default=UserRole.CLIENT, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     orders = relationship("Order", back_populates="user")
@@ -51,26 +58,26 @@ class Category(Base):
     __tablename__ = "categories"
 
     id = Column(Integer, primary_key=True, index=True)
-    nom = Column(String(100), nullable=False, unique=True)
+    nom = Column(String(100), unique=True, index=True, nullable=False)
     description = Column(Text, nullable=True)
     image_url = Column(String(500), nullable=True)
-    slug = Column(String(120), unique=True, index=True)
+    slug = Column(String(120), unique=True, index=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    products = relationship("Product", back_populates="category")
+    products = relationship("Product", back_populates="category", cascade="all, delete-orphan")
 
 
 class Product(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, index=True)
-    nom = Column(String(200), nullable=False)
+    nom = Column(String(200), index=True, nullable=False)
     description = Column(Text, nullable=True)
     prix = Column(Float, nullable=False)
     prix_promo = Column(Float, nullable=True)
-    stock = Column(Integer, default=0)
+    stock = Column(Integer, default=0, nullable=False)
     image_url = Column(String(500), nullable=True)
-    category_id = Column(Integer, ForeignKey("categories.id"), nullable=False)
+    category_id = Column(Integer, ForeignKey("categories.id", ondelete="CASCADE"), nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -82,9 +89,9 @@ class Order(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     total = Column(Float, nullable=False)
-    statut = Column(String(20), default=OrderStatus.en_attente.value)
+    statut = Column(Enum(OrderStatus), default=OrderStatus.EN_ATTENTE, nullable=False)
     nom_client = Column(String(100), nullable=True)
     telephone = Column(String(20), nullable=True)
     adresse = Column(Text, nullable=True)
@@ -99,9 +106,9 @@ class OrderItem(Base):
     __tablename__ = "order_items"
 
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False)
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
-    quantite = Column(Integer, nullable=False)
+    quantite = Column(Integer, nullable=False, default=1)
     prix_unitaire = Column(Float, nullable=False)
 
     order = relationship("Order", back_populates="items")
@@ -112,10 +119,10 @@ class Payment(Base):
     __tablename__ = "payments"
 
     id = Column(Integer, primary_key=True, index=True)
-    order_id = Column(Integer, ForeignKey("orders.id"), nullable=False, unique=True)
-    methode = Column(String(20), nullable=False)
-    statut = Column(String(20), default=PaymentStatus.en_attente.value)
-    reference = Column(String(100), nullable=True)
+    order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), unique=True, nullable=False)
+    methode = Column(Enum(PaymentMethod), nullable=False)
+    statut = Column(Enum(PaymentStatus), default=PaymentStatus.EN_ATTENTE, nullable=False)
+    reference = Column(String(100), unique=True, nullable=True)
     montant = Column(Float, nullable=False)
     telephone = Column(String(20), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
